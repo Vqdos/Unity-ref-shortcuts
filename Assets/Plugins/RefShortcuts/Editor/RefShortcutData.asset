@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99780fafa2a63b74dbd55db8947febf5, type: 3}
+  m_Name: RefShortcutData
+  m_EditorClassIdentifier: 
+  <Container>k__BackingField:
+  - <Name>k__BackingField: Temp
+    <DataList>k__BackingField:
+    - <Name>k__BackingField: ShortcutEditor
+      <Object>k__BackingField: {fileID: 11500000, guid: 63fdf5a20d3eeaa418faae38a06a50b0,
+        type: 3}
+    - <Name>k__BackingField: RefShortcutData
+      <Object>k__BackingField: {fileID: 11400000}
+    - <Name>k__BackingField: com.unity.ext.nunit
+      <Object>k__BackingField: {fileID: 102900000, guid: 25a477c2f24db8778a4179421a32cc21,
+        type: 3}
+    - <Name>k__BackingField: UnityEditor.UI
+      <Object>k__BackingField: {fileID: 5897886265953266890, guid: 343deaaf83e0cee4ca978e7df0b80d21,
+        type: 3}
+    - <Name>k__BackingField: AssemblyInfo
+      <Object>k__BackingField: {fileID: 11500000, guid: d51458b261e0ecc4a98904e53924dc1c,
+        type: 3}
+    - <Name>k__BackingField: README
+      <Object>k__BackingField: {fileID: 4900000, guid: 5da62a0c1c5218c4aa16b74546a7822d,
+        type: 3}
+  - <Name>k__BackingField: System
+    <DataList>k__BackingField:
+    - <Name>k__BackingField: com.unity.textmeshpro
+      <Object>k__BackingField: {fileID: 102900000, guid: cabaa672b0e3ee91fa7b6da4daab7970,
+        type: 3}
+    - <Name>k__BackingField: com.unity.ide.rider
+      <Object>k__BackingField: {fileID: 102900000, guid: ea5aa18a49e4f29d74984ea0ea11a238,
+        type: 3}
+    - <Name>k__BackingField: com.unity.timeline
+      <Object>k__BackingField: {fileID: 102900000, guid: a4610cf559d77b9f256416d9ccaeac55,
+        type: 3}
