@@ -1,0 +1,12 @@
+{
+    "name": "RefShortcuts",
+    "displayName": "RefShortcuts",
+    "author": { "name": "Vadim K" },
+    "version": "1.0.0",
+    "unity": "2018.4",
+    "description": "The Unity tool for quickly selecting any object in the project.",
+    "keywords": [ "Tools" ],
+    "license": "MIT",
+    "category": "Tools",
+    "dependencies": {}
+}
