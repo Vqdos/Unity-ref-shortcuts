@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Plugins.RefShortcuts.Scripts
+namespace RefShortcuts.Editor
 {
     public class ShortcutData : ScriptableObject
     {
@@ -26,29 +26,30 @@ namespace Plugins.RefShortcuts.Scripts
             return Container.Select(tab => tab.Name).ToArray();
         }
 
-        public void AddTab(string key)
+        public bool AddTab(string name)
         {
-            Container.Add(new TabContainer(key));
+            if (Container.FirstOrDefault(x => x.Name == name) != null)
+                return false;
+            
+            Container.Add(new TabContainer(name));
+            return true;
         }
 
-        public bool RenameTab(string fromKey, string toKey)
+        public bool RenameTab(string fromName, string toName)
         {
-            var item = Container.FirstOrDefault(x => x.Name.Equals(fromKey));
+            var item = Container.FirstOrDefault(x => x.Name.Equals(fromName));
 
             if (item == null)
-            {
-                Debug.LogError($"{nameof(ShortcutData)}: tab \"{fromKey}\" dont found");
                 return false;
-            }
-
-            item.SetName(toKey);
+            
+            item.SetName(toName);
 
             return true;
         }
 
-        public void RemoveTab(string key)
+        public void RemoveTab(string name)
         {
-            Container.RemoveAll(x => x.Name == key);
+            Container.RemoveAll(x => x.Name == name);
         }
     }
 }

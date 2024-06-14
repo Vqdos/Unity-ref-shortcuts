@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Plugins.RefShortcuts.Scripts
+namespace RefShortcuts.Editor
 {
     [Serializable]
     public class TabContainer

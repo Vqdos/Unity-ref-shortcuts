@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using Plugins.RefShortcuts.Scripts;
 using UnityEditor;
 using UnityEngine;
 
-namespace Plugins.RefShortcuts.Editor
+namespace RefShortcuts.Editor
 {
     public class ShortcutEditor : EditorWindow
     {
@@ -191,14 +190,16 @@ namespace Plugins.RefShortcuts.Editor
                         if (tabName != newName)
                         {
                             if (!_shortcutData.RenameTab(tabName, newName))
+                            {
+                                Debug.LogError($"{nameof(ShortcutData)}: tab \"{tabName}\" dont found");
                                 break;
+                            }
                         }
                     
                         if(i != 0)
                         {
                             if (GUILayout.Button("X", GUILayout.Width(20f)))
                             {
-                                Debug.LogError("Remove");
                                 if (_currentTabIndex == i)
                                     _currentTabIndex = 0;
                         
@@ -218,8 +219,8 @@ namespace Plugins.RefShortcuts.Editor
             
                     if (GUILayout.Button("+", GUILayout.Width(20f)))
                     {
-                        Debug.LogError("Add");
-                        _shortcutData.AddTab(_settingsNewTabNAme);
+                        if(!_shortcutData.AddTab(_settingsNewTabNAme))
+                            Debug.LogError($"{nameof(ShortcutData)}: tab \"{_settingsNewTabNAme}\" already exist");
                     }   
                 }
                 EditorGUILayout.EndHorizontal();

@@ -2,7 +2,7 @@
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Plugins.RefShortcuts.Scripts
+namespace RefShortcuts.Editor
 {
     [Serializable]
     public class ShortcutDataContainer
