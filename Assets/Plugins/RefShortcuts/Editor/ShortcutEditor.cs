@@ -72,11 +72,28 @@ namespace RefShortcuts.Editor
         private void OnGUI()
         {
             _deleteItemIndex = -1;
-            var dataList = CurrentDataList;
-            var tabs = _shortcutData.GetTabs();
 
-            #region Add Shortcut
+            DrawHeader();
 
+            if (!_settingsEnabled)
+            {
+                DrawScrollContent(() =>
+                {
+                    DrawTabs();
+                    if (_reorderableList == null)
+                        IntReorderableList(CurrentDataList);
+
+                    _reorderableList?.DoLayoutList();
+                });
+            }
+            else
+            {
+                DrawSettings();
+            }
+        }
+
+        private void DrawHeader()
+        {
             var addObjFieldRect = new Rect(1f, 0f, (position.width - 2f), 22f);
             DrawBackgroundBox(addObjFieldRect, _addFieldColor);
 
@@ -86,18 +103,18 @@ namespace RefShortcuts.Editor
                 EditorGUIUtility.labelWidth = 115f;
                 _newObject = EditorGUILayout.ObjectField("Drag anything here:", _newObject, typeof(Object), true, GUILayout.Width(width - 28));
 
-                if (_newObject != null && !dataList.Exists(x => x.Object == _newObject))
+                if (_newObject != null && !CurrentDataList.Exists(x => x.Object == _newObject))
                 {
-                    var firstEmptyIndex = dataList.FindIndex(x => x.Object == null);
+                    var firstEmptyIndex = CurrentDataList.FindIndex(x => x.Object == null);
                     var newDataInfo = new ShortcutDataContainer(_newObject);
 
                     if (firstEmptyIndex < 0)
                     {
-                        dataList.Add(newDataInfo);
+                        CurrentDataList.Add(newDataInfo);
                     }
                     else
                     {
-                        dataList[firstEmptyIndex] = newDataInfo;
+                        CurrentDataList[firstEmptyIndex] = newDataInfo;
                     }
 
                     EditorUtility.SetDirty(_shortcutData);
@@ -116,33 +133,20 @@ namespace RefShortcuts.Editor
                 EditorGUILayout.EndVertical();
             }
             EditorGUILayout.EndHorizontal();
-
-            #endregion Add Shortcut
-
-            #region Show list
-
-            /*var listFieldRect = new Rect(1f, 21f, (position.width - 2f), position.height);
-            DrawBackgroundBox(listFieldRect, _listFieldColor);*/
-            
-            if (!_settingsEnabled)
+        }
+        
+        private void DrawScrollContent(Action callback)
+        {
+            _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos, GUILayout.Width(position.width), GUILayout.Height(position.height - 40f));
             {
-                _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos, GUILayout.Width(position.width), GUILayout.Height(position.height - 40f));
-                {
-                    DrawTabs(tabs);
-                    _reorderableList?.DoLayoutList();
-                }
-                EditorGUILayout.EndScrollView();
+               callback?.Invoke();
             }
-            else
-            {
-                DrawSettings(tabs);
-            }
-
-            #endregion Show list
+            EditorGUILayout.EndScrollView();
         }
 
-        private void DrawTabs(string[] tabs)
+        private void DrawTabs()
         {
+            var tabs = _shortcutData.GetTabs();
             if (tabs.Length <= 1)
                 return;
 
@@ -158,11 +162,12 @@ namespace RefShortcuts.Editor
             }
         }
         
-        private void DrawSettings(IReadOnlyList<string> tabs)
+        private void DrawSettings()
         {
+            var tabs = _shortcutData.GetTabs();
             EditorGUILayout.BeginVertical();
             {
-                for (var i = 0; i < tabs.Count; i++)
+                for (var i = 0; i < tabs.Length; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
