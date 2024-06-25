@@ -11,11 +11,7 @@ namespace RefShortcuts.Editor
 {
     public class ShortcutEditor : EditorWindow
     {
-        private const string SHORTCUT_DATA_FILE_NAME = "RefShortcutData.asset";
-
         private static EditorWindow _window = null;
-        private readonly Color _addFieldColor = new Color(0f, 0.25f, 0f, 0.2f);
-        private readonly Color _listFieldColor = new Color(0f, 0f, 0f, 0.2f);
 
         private ShortcutData _shortcutData;
         private Object _newObject;
@@ -23,10 +19,12 @@ namespace RefShortcuts.Editor
         private int _currentTabIndex;
         private bool _settingsEnabled;
         private string _settingsNewTabName;
-        private ReorderableList _reorderableList;
-        
+        private ReorderableList _tabItemsReorderableList;
+        private ReorderableList _tabsReorderableList;
+        private bool _disableListDraw;
+
         private List<ShortcutDataContainer> CurrentDataList => _shortcutData.GetData(_currentTabIndex);
-        
+
         [MenuItem("Window/Tools/RefShortcut", false, 1)]
         private static void ShowWindow()
         {
@@ -38,12 +36,11 @@ namespace RefShortcuts.Editor
         {
             CacheShortcutData();
             RemoveEmptyElementsInData();
-            IntReorderableList(CurrentDataList);
         }
 
         private void CacheShortcutData()
         {
-            var configFilePath = $"{GetEditorScriptFilePath()}{SHORTCUT_DATA_FILE_NAME}";
+            var configFilePath = $"{GetEditorScriptFilePath()}{StaticContent.SHORTCUT_DATA_FILE_NAME}";
             _shortcutData = (ShortcutData)(AssetDatabase.LoadAssetAtPath(configFilePath, typeof(ShortcutData)));
 
             if (_shortcutData == null)
@@ -71,7 +68,7 @@ namespace RefShortcuts.Editor
 
         private void OnGUI()
         {
-            _deleteItemIndex = -1;
+            _disableListDraw = false;
 
             DrawHeader();
 
@@ -80,10 +77,11 @@ namespace RefShortcuts.Editor
                 DrawScrollContent(() =>
                 {
                     DrawTabs();
-                    if (_reorderableList == null)
-                        IntReorderableList(CurrentDataList);
-
-                    _reorderableList?.DoLayoutList();
+                    
+                    if (_tabItemsReorderableList == null)
+                        IntTabItemsReorderableList(CurrentDataList);
+                    
+                    _tabItemsReorderableList?.DoLayoutList();
                 });
             }
             else
@@ -95,46 +93,64 @@ namespace RefShortcuts.Editor
         private void DrawHeader()
         {
             var addObjFieldRect = new Rect(1f, 0f, (position.width - 2f), 22f);
-            DrawBackgroundBox(addObjFieldRect, _addFieldColor);
+            DrawBackgroundBox(addObjFieldRect, StaticContent.HEADER_COLOR);
 
             EditorGUILayout.BeginHorizontal(); //add object
             {
                 var width = position.width;
-                EditorGUIUtility.labelWidth = 115f;
-                _newObject = EditorGUILayout.ObjectField("Drag anything here:", _newObject, typeof(Object), true, GUILayout.Width(width - 28));
-
-                if (_newObject != null && !CurrentDataList.Exists(x => x.Object == _newObject))
+                if (!_settingsEnabled)
                 {
-                    var firstEmptyIndex = CurrentDataList.FindIndex(x => x.Object == null);
-                    var newDataInfo = new ShortcutDataContainer(_newObject);
+                    EditorGUIUtility.labelWidth = 115f;
+                    _newObject = EditorGUILayout.ObjectField(StaticContent.DRAG_FIELD_LABEL, _newObject, typeof(Object), true, GUILayout.Width(width - 28));
 
-                    if (firstEmptyIndex < 0)
+                    if (_newObject != null && !CurrentDataList.Exists(x => x.Object == _newObject))
                     {
-                        CurrentDataList.Add(newDataInfo);
-                    }
-                    else
-                    {
-                        CurrentDataList[firstEmptyIndex] = newDataInfo;
-                    }
+                        var firstEmptyIndex = CurrentDataList.FindIndex(x => x.Object == null);
+                        var newDataInfo = new ShortcutDataContainer(_newObject);
 
-                    EditorUtility.SetDirty(_shortcutData);
-                }
+                        if (firstEmptyIndex < 0)
+                        {
+                            CurrentDataList.Add(newDataInfo);
+                        }
+                        else
+                        {
+                            CurrentDataList[firstEmptyIndex] = newDataInfo;
+                        }
 
-                _newObject = null;
+                        EditorUtility.SetDirty(_shortcutData);
+                    }
+                    
+                    _newObject = null;
        
-                EditorGUILayout.BeginVertical(); // settings button
-                {
-                    GUILayout.Space(3);
-                    if (GUILayout.Button(EditorGUIUtility.IconContent("_Popup"), new GUIStyle(), GUILayout.Height(20)))
+                    EditorGUILayout.BeginVertical(); // settings button
                     {
-                        _settingsEnabled = !_settingsEnabled;
+                        GUILayout.Space(3);
+                        if (GUILayout.Button(StaticContent.SettingsIcon, new GUIStyle(), GUILayout.Height(20)))
+                        {
+                            _settingsEnabled = !_settingsEnabled;
+                        }
                     }
                 }
+                else
+                {
+                    EditorGUILayout.LabelField(StaticContent.SETTINGS_TABS_LABEL, GUILayout.Width(width - 28));
+                    
+                    EditorGUILayout.BeginVertical(); // close settings button
+                    {
+                        GUILayout.Space(3);
+                        if (GUILayout.Button(StaticContent.CloseSettingsIcon, new GUIStyle(), GUILayout.Height(20)))
+                        {
+                            _settingsEnabled = !_settingsEnabled;
+                        }
+                    }
+                }
+
+                
                 EditorGUILayout.EndVertical();
             }
             EditorGUILayout.EndHorizontal();
         }
-        
+
         private void DrawScrollContent(Action callback)
         {
             _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos, GUILayout.Width(position.width), GUILayout.Height(position.height - 40f));
@@ -152,123 +168,158 @@ namespace RefShortcuts.Editor
 
             var lastIndex = _currentTabIndex;
 
-            EditorGUILayout.BeginHorizontal();
-            _currentTabIndex = GUILayout.Toolbar(_currentTabIndex, tabs);
-            EditorGUILayout.EndHorizontal();
+            GuiHorizontal(() =>
+            {
+                _currentTabIndex = GUILayout.Toolbar(_currentTabIndex, tabs);
+            });
 
             if (lastIndex != _currentTabIndex)
             {
-                IntReorderableList(CurrentDataList);
+                IntTabItemsReorderableList(CurrentDataList);
             }
         }
-        
+
         private void DrawSettings()
         {
-            var tabs = _shortcutData.GetTabs();
-            EditorGUILayout.BeginVertical();
+            GuiVertical(() =>
             {
-                for (var i = 0; i < tabs.Length; i++)
-                {
-                    EditorGUILayout.BeginHorizontal();
-                    {
-                        var tabName= tabs[i];
-                        var newName = GUILayout.TextField(tabName);
+                if (_tabsReorderableList == null)
+                    IntSettingsTabsReorderableList(_shortcutData.GetTabs());
 
-                        if (tabName != newName)
-                        {
-                            if (!_shortcutData.RenameTab(tabName, newName))
-                            {
-                                Debug.LogError($"{nameof(ShortcutData)}: tab \"{tabName}\" dont found");
-                                break;
-                            }
-                        }
-                    
-                        if(i != 0)
-                        {
-                            if (GUILayout.Button("X", GUILayout.Width(20f)))
-                            {
-                                if (_currentTabIndex == i)
-                                    _currentTabIndex = 0;
-                        
-                                _shortcutData.RemoveTab(tabName);
-                            }
-                        }
-                    }
-                    EditorGUILayout.EndHorizontal();
-                }
-                
-                GUILayout.Space(10);
-                GUILayout.Label("Add new tab:", GUILayout.Width(90f));
-
-                EditorGUILayout.BeginHorizontal();
-                {
-                    _settingsNewTabName = GUILayout.TextField(_settingsNewTabName);
-            
-                    if (GUILayout.Button("+", GUILayout.Width(20f)))
-                    {
-                        if(!_shortcutData.AddTab(_settingsNewTabName))
-                            Debug.LogError($"{nameof(ShortcutData)}: tab \"{_settingsNewTabName}\" already exist");
-                    }   
-                }
-                EditorGUILayout.EndHorizontal();
-            }
-            EditorGUILayout.EndVertical();
+                _tabsReorderableList?.DoLayoutList();
+            });
         }
 
-        private void IntReorderableList(IList list)
+        private void IntTabItemsReorderableList(IList list)
         {
-            _reorderableList = new ReorderableList(list, typeof(Object));
-            _reorderableList.drawElementCallback += DrawReorderListElement;
-            _reorderableList.onReorderCallback += ReorderCallback;
-            _reorderableList.displayRemove = false;
-            _reorderableList.displayAdd = false;
-            _reorderableList.headerHeight = 0;
+            _tabItemsReorderableList = new ReorderableList(list, typeof(Object));
+            _tabItemsReorderableList.drawElementCallback += DrawTabItemsReorderListElement;
+            _tabItemsReorderableList.onReorderCallback += TabItemsReorderCallback;
+            _tabItemsReorderableList.displayRemove = false;
+            _tabItemsReorderableList.displayAdd = false;
+            _tabItemsReorderableList.headerHeight = 0; 
         }
 
-        private void ReorderCallback(ReorderableList reorderableList)
+        private void IntSettingsTabsReorderableList(IList list)
+        {
+            _tabsReorderableList = new ReorderableList(list, typeof(string));
+            _tabsReorderableList.drawElementCallback += DrawSettingsReorderListElement;
+            _tabsReorderableList.onReorderCallback += SettingsTabsReorderCallback;
+            _tabsReorderableList.onAddCallback += SettingsAddTabsCallback;
+            _tabsReorderableList.displayRemove = false;
+            _tabsReorderableList.headerHeight = 0;
+        }
+
+        private void SettingsAddTabsCallback(ReorderableList reorderableList)
+        {
+            const string tabName = StaticContent.NEW_TAB_NAME;
+            var search = true;
+            var index = 0;
+            var newTabName = string.Empty;
+            var tabs = _shortcutData.GetTabs();
+            while (search)
+            {
+                newTabName = $"{tabName}{index++}";
+                search = tabs.FirstOrDefault(x => x.Equals(newTabName)) != null;
+            }
+            
+            _shortcutData.AddTab(newTabName);
+            
+            EditorUtility.SetDirty(_shortcutData);
+            _tabsReorderableList = null;
+        }
+
+        private void SettingsTabsReorderCallback(ReorderableList reorderableList)
+        {
+            var array = reorderableList.list as string[];
+            _shortcutData.ReorderTabs(array);
+            
+            EditorUtility.SetDirty(_shortcutData);
+            
+            _tabsReorderableList = null;
+            _tabItemsReorderableList = null;
+            _currentTabIndex = 0;
+        }
+
+        
+        private void DrawSettingsReorderListElement(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            if(_disableListDraw)
+                return;
+
+            GuiHorizontal(() =>
+            {
+                var tab = _shortcutData.GetTabs()[index];
+                var fieldRect = new Rect(rect.x, rect.y, position.width - 50, EditorGUIUtility.singleLineHeight);
+                var newTabName = EditorGUI.TextField(fieldRect, tab);
+
+                if (!newTabName.Equals(tab, StringComparison.InvariantCulture))
+                    _shortcutData.RenameTab(tab, newTabName);
+
+                fieldRect.x = rect.x + position.width - 45;
+                fieldRect.width = 20;
+                if (GUI.Button(fieldRect, StaticContent.CloseIcon))
+                {
+                    _shortcutData.RemoveTab(tab);
+                    _disableListDraw = true;
+                }
+            });
+        }
+
+        private void TabItemsReorderCallback(ReorderableList reorderableList)
         {
             _shortcutData.SetDataList((List<ShortcutDataContainer>)reorderableList.list, _currentTabIndex);
             EditorUtility.SetDirty(_shortcutData);
         }
 
-        private int _deleteItemIndex = -1;
-        private void DrawReorderListElement(Rect rect, int index, bool isActive, bool isFocused)
+        private void DrawTabItemsReorderListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
-            if(_deleteItemIndex >= 0)
+            if(_disableListDraw)
                 return;
-            
-            EditorGUILayout.BeginHorizontal();
+
+            GuiHorizontal(() =>
             {
-                var objRect = new Rect(rect.x, rect.y, position.width - 50, EditorGUIUtility.singleLineHeight);
+                var fieldRect = new Rect(rect.x, rect.y, position.width - 50, EditorGUIUtility.singleLineHeight);
                 var curInfo = CurrentDataList.ElementAt(index);
-                EditorGUI.ObjectField(objRect, curInfo.Object, typeof(Object),false);
+                EditorGUI.ObjectField(fieldRect, curInfo.Object, typeof(Object),false);
                 
-                objRect.x = rect.x + position.width - 45;
-                objRect.width = 20;
-                if (GUI.Button(objRect, EditorGUIUtility.IconContent("d_Toolbar Minus")))
+                fieldRect.x = rect.x + position.width - 45;
+                fieldRect.width = 20;
+                if (GUI.Button(fieldRect, StaticContent.RemoveIcon))
                 {
-                    _deleteItemIndex = index;
+                    RemoveTabItem(index);
+                    _disableListDraw = true;
                 }
-            }
-            EditorGUILayout.EndHorizontal();
-            
-            if (_deleteItemIndex >= 0)
-            {
-                RemoveItem(_deleteItemIndex);
-            }
+            });
         }
 
-        private void RemoveItem(int index)
+        private void RemoveTabItem(int index)
         {
             CurrentDataList.RemoveAt(index);
-            IntReorderableList(CurrentDataList);
+
+            _tabItemsReorderableList = null;
             EditorUtility.SetDirty(_shortcutData);
+            _disableListDraw = true;
         }
 
         private static void DrawBackgroundBox(Rect rect, Color color)
         {
             EditorGUI.HelpBox(rect, null, MessageType.None);
             EditorGUI.DrawRect(rect, color);
+        }
+
+        private static void GuiVertical(Action callback)
+        {
+            EditorGUILayout.BeginVertical();
+            callback?.Invoke();
+            EditorGUILayout.EndVertical();
+        }
+        
+        private static void GuiHorizontal(Action callback)
+        {
+            EditorGUILayout.BeginHorizontal();
+            callback?.Invoke();
+            EditorGUILayout.EndHorizontal();
         }
     }
 }

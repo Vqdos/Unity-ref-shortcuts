@@ -35,14 +35,14 @@ namespace RefShortcuts.Editor
             return true;
         }
 
-        public bool RenameTab(string fromName, string toName)
+        public bool RenameTab(string from, string to)
         {
-            var item = Container.FirstOrDefault(x => x.Name.Equals(fromName));
+            var item = Container.FirstOrDefault(x => x.Name.Equals(from));
 
             if (item == null)
                 return false;
             
-            item.SetName(toName);
+            item.SetName(to);
 
             return true;
         }
@@ -50,6 +50,17 @@ namespace RefShortcuts.Editor
         public void RemoveTab(string name)
         {
             Container.RemoveAll(x => x.Name == name);
+        }
+
+        public void ReorderTabs(string[] array)
+        {
+            var source = new List<TabContainer>(Container);
+            Container = new List<TabContainer>();
+            
+            foreach (var tab in array)
+            {
+                Container.Add(source.First(x=>x.Name.Equals(tab)));
+            }
         }
     }
 }
