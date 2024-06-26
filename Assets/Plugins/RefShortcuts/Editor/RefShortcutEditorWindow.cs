@@ -9,11 +9,10 @@ using Object = UnityEngine.Object;
 
 namespace RefShortcuts.Editor
 {
-    public class ShortcutEditor : EditorWindow
+    public class RefShortcutEditorWindow : EditorWindow
     {
-        private static EditorWindow _window = null;
-
-        private ShortcutData _shortcutData;
+        private static EditorWindow _window;
+        private DataContainer _dataContainer;
         private Object _newObject;
         private Vector2 _scrollPos = Vector2.zero;
         private int _currentTabIndex;
@@ -23,12 +22,12 @@ namespace RefShortcuts.Editor
         private ReorderableList _tabsReorderableList;
         private bool _disableListDraw;
 
-        private List<ShortcutDataContainer> CurrentDataList => _shortcutData.GetData(_currentTabIndex);
+        private List<ObjectContainer> CurrentDataList => _dataContainer.GetData(_currentTabIndex);
 
         [MenuItem("Window/Tools/RefShortcut", false, 1)]
         private static void ShowWindow()
         {
-            _window = GetWindow(typeof(ShortcutEditor));
+            _window = GetWindow(typeof(RefShortcutEditorWindow));
             _window.titleContent.text = "RefShortcuts";
         }
 
@@ -41,14 +40,14 @@ namespace RefShortcuts.Editor
         private void CacheShortcutData()
         {
             var configFilePath = $"{GetEditorScriptFilePath()}{StaticContent.SHORTCUT_DATA_FILE_NAME}";
-            _shortcutData = (ShortcutData)(AssetDatabase.LoadAssetAtPath(configFilePath, typeof(ShortcutData)));
+            _dataContainer = (DataContainer) (AssetDatabase.LoadAssetAtPath(configFilePath, typeof(DataContainer)));
 
-            if (_shortcutData == null)
+            if (_dataContainer == null)
             {
-                AssetDatabase.CreateAsset(CreateInstance<ShortcutData>(), configFilePath);
+                AssetDatabase.CreateAsset(CreateInstance<DataContainer>(), configFilePath);
                 AssetDatabase.SaveAssets();
 
-                _shortcutData = (ShortcutData)(AssetDatabase.LoadAssetAtPath(configFilePath, typeof(ShortcutData)));
+                _dataContainer = (DataContainer) (AssetDatabase.LoadAssetAtPath(configFilePath, typeof(DataContainer)));
             }
         }
 
@@ -56,14 +55,14 @@ namespace RefShortcuts.Editor
         {
             var monoScript = MonoScript.FromScriptableObject(this);
             var scriptFilePath = AssetDatabase.GetAssetPath(monoScript);
-            return scriptFilePath.Split(new[] { monoScript.name + ".cs" }, System.StringSplitOptions.None)[0];
+            return scriptFilePath.Split(new[] {monoScript.name + ".cs"}, System.StringSplitOptions.None)[0];
         }
 
         private void RemoveEmptyElementsInData()
         {
             var list = CurrentDataList.Where(x => x.Object != null).Distinct().ToList();
-            _shortcutData.SetDataList(list, _currentTabIndex);
-            EditorUtility.SetDirty(_shortcutData);
+            _dataContainer.SetDataList(list, _currentTabIndex);
+            EditorUtility.SetDirty(_dataContainer);
         }
 
         private void OnGUI()
@@ -74,19 +73,19 @@ namespace RefShortcuts.Editor
 
             if (!_settingsEnabled)
             {
-                DrawScrollContent(() =>
+                _scrollPos = DrawScroll(_scrollPos, position, () =>
                 {
                     DrawTabs();
-                    
+
                     if (_tabItemsReorderableList == null)
                         IntTabItemsReorderableList(CurrentDataList);
-                    
+
                     _tabItemsReorderableList?.DoLayoutList();
                 });
             }
             else
             {
-                DrawSettings();
+                _scrollPos = DrawScroll(_scrollPos, position, DrawSettings);
             }
         }
 
@@ -101,12 +100,16 @@ namespace RefShortcuts.Editor
                 if (!_settingsEnabled)
                 {
                     EditorGUIUtility.labelWidth = 115f;
-                    _newObject = EditorGUILayout.ObjectField(StaticContent.DRAG_FIELD_LABEL, _newObject, typeof(Object), true, GUILayout.Width(width - 28));
+                    _newObject = EditorGUILayout.ObjectField(StaticContent.DRAG_FIELD_LABEL,
+                        _newObject,
+                        typeof(Object),
+                        true,
+                        GUILayout.Width(width - 28));
 
                     if (_newObject != null && !CurrentDataList.Exists(x => x.Object == _newObject))
                     {
                         var firstEmptyIndex = CurrentDataList.FindIndex(x => x.Object == null);
-                        var newDataInfo = new ShortcutDataContainer(_newObject);
+                        var newDataInfo = new ObjectContainer(_newObject);
 
                         if (firstEmptyIndex < 0)
                         {
@@ -117,15 +120,15 @@ namespace RefShortcuts.Editor
                             CurrentDataList[firstEmptyIndex] = newDataInfo;
                         }
 
-                        EditorUtility.SetDirty(_shortcutData);
+                        EditorUtility.SetDirty(_dataContainer);
                     }
-                    
+
                     _newObject = null;
-       
+
                     EditorGUILayout.BeginVertical(); // settings button
                     {
                         GUILayout.Space(3);
-                        if (GUILayout.Button(StaticContent.SettingsIcon, new GUIStyle(), GUILayout.Height(20)))
+                        if (GUILayout.Button(StaticContent.SettingsIcon, new GUIStyle(), GUILayout.Height(StaticContent.SETTINGS_BUTTON_SIZE)))
                         {
                             _settingsEnabled = !_settingsEnabled;
                         }
@@ -134,44 +137,32 @@ namespace RefShortcuts.Editor
                 else
                 {
                     EditorGUILayout.LabelField(StaticContent.SETTINGS_TABS_LABEL, GUILayout.Width(width - 28));
-                    
+
                     EditorGUILayout.BeginVertical(); // close settings button
                     {
                         GUILayout.Space(3);
-                        if (GUILayout.Button(StaticContent.CloseSettingsIcon, new GUIStyle(), GUILayout.Height(20)))
+                        if (GUILayout.Button(StaticContent.CloseSettingsIcon, new GUIStyle(), GUILayout.Height(StaticContent.SETTINGS_BUTTON_SIZE)))
                         {
                             _settingsEnabled = !_settingsEnabled;
                         }
                     }
                 }
 
-                
+
                 EditorGUILayout.EndVertical();
             }
             EditorGUILayout.EndHorizontal();
         }
 
-        private void DrawScrollContent(Action callback)
-        {
-            _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos, GUILayout.Width(position.width), GUILayout.Height(position.height - 40f));
-            {
-               callback?.Invoke();
-            }
-            EditorGUILayout.EndScrollView();
-        }
-
         private void DrawTabs()
         {
-            var tabs = _shortcutData.GetTabs();
+            var tabs = _dataContainer.GetTabs();
             if (tabs.Length <= 1)
                 return;
 
             var lastIndex = _currentTabIndex;
 
-            GuiHorizontal(() =>
-            {
-                _currentTabIndex = GUILayout.Toolbar(_currentTabIndex, tabs);
-            });
+            GuiHorizontal(() => { _currentTabIndex = GUILayout.Toolbar(_currentTabIndex, tabs); });
 
             if (lastIndex != _currentTabIndex)
             {
@@ -184,7 +175,7 @@ namespace RefShortcuts.Editor
             GuiVertical(() =>
             {
                 if (_tabsReorderableList == null)
-                    IntSettingsTabsReorderableList(_shortcutData.GetTabs());
+                    IntSettingsTabsReorderableList(_dataContainer.GetTabs());
 
                 _tabsReorderableList?.DoLayoutList();
             });
@@ -197,7 +188,7 @@ namespace RefShortcuts.Editor
             _tabItemsReorderableList.onReorderCallback += TabItemsReorderCallback;
             _tabItemsReorderableList.displayRemove = false;
             _tabItemsReorderableList.displayAdd = false;
-            _tabItemsReorderableList.headerHeight = 0; 
+            _tabItemsReorderableList.headerHeight = 0;
         }
 
         private void IntSettingsTabsReorderableList(IList list)
@@ -216,75 +207,76 @@ namespace RefShortcuts.Editor
             var search = true;
             var index = 0;
             var newTabName = string.Empty;
-            var tabs = _shortcutData.GetTabs();
+            var tabs = _dataContainer.GetTabs();
             while (search)
             {
                 newTabName = $"{tabName}{index++}";
                 search = tabs.FirstOrDefault(x => x.Equals(newTabName)) != null;
             }
-            
-            _shortcutData.AddTab(newTabName);
-            
-            EditorUtility.SetDirty(_shortcutData);
+
+            _dataContainer.AddTab(newTabName);
+
+            EditorUtility.SetDirty(_dataContainer);
             _tabsReorderableList = null;
         }
 
         private void SettingsTabsReorderCallback(ReorderableList reorderableList)
         {
             var array = reorderableList.list as string[];
-            _shortcutData.ReorderTabs(array);
-            
-            EditorUtility.SetDirty(_shortcutData);
-            
+            _dataContainer.ReorderTabs(array);
+
+            EditorUtility.SetDirty(_dataContainer);
+
             _tabsReorderableList = null;
             _tabItemsReorderableList = null;
             _currentTabIndex = 0;
         }
 
-        
+
         private void DrawSettingsReorderListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
-            if(_disableListDraw)
+            if (_disableListDraw)
                 return;
 
             GuiHorizontal(() =>
             {
-                var tab = _shortcutData.GetTabs()[index];
-                var fieldRect = new Rect(rect.x, rect.y, position.width - 50, EditorGUIUtility.singleLineHeight);
+                var tab = _dataContainer.GetTabs()[index];
+                var fieldRect = new Rect(rect.x, rect.y, position.width - StaticContent.FIELD_SIZE, EditorGUIUtility.singleLineHeight);
                 var newTabName = EditorGUI.TextField(fieldRect, tab);
 
                 if (!newTabName.Equals(tab, StringComparison.InvariantCulture))
-                    _shortcutData.RenameTab(tab, newTabName);
+                    _dataContainer.RenameTab(tab, newTabName);
 
-                fieldRect.x = rect.x + position.width - 45;
-                fieldRect.width = 20;
+                fieldRect.x = rect.x + position.width - StaticContent.REMOVE_BUTTON_OFFSET;
+                fieldRect.width = StaticContent.REMOVE_BUTTON_SIZE;
                 if (GUI.Button(fieldRect, StaticContent.CloseIcon))
                 {
-                    _shortcutData.RemoveTab(tab);
+                    _dataContainer.RemoveTab(tab);
                     _disableListDraw = true;
+                    _tabsReorderableList = null;
                 }
             });
         }
 
         private void TabItemsReorderCallback(ReorderableList reorderableList)
         {
-            _shortcutData.SetDataList((List<ShortcutDataContainer>)reorderableList.list, _currentTabIndex);
-            EditorUtility.SetDirty(_shortcutData);
+            _dataContainer.SetDataList((List<ObjectContainer>) reorderableList.list, _currentTabIndex);
+            EditorUtility.SetDirty(_dataContainer);
         }
 
         private void DrawTabItemsReorderListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
-            if(_disableListDraw)
+            if (_disableListDraw)
                 return;
 
             GuiHorizontal(() =>
             {
-                var fieldRect = new Rect(rect.x, rect.y, position.width - 50, EditorGUIUtility.singleLineHeight);
+                var fieldRect = new Rect(rect.x, rect.y, position.width - StaticContent.FIELD_SIZE, EditorGUIUtility.singleLineHeight);
                 var curInfo = CurrentDataList.ElementAt(index);
-                EditorGUI.ObjectField(fieldRect, curInfo.Object, typeof(Object),false);
-                
-                fieldRect.x = rect.x + position.width - 45;
-                fieldRect.width = 20;
+                EditorGUI.ObjectField(fieldRect, curInfo.Object, typeof(Object), false);
+
+                fieldRect.x = rect.x + position.width - StaticContent.REMOVE_BUTTON_OFFSET;
+                fieldRect.width = StaticContent.REMOVE_BUTTON_SIZE;
                 if (GUI.Button(fieldRect, StaticContent.RemoveIcon))
                 {
                     RemoveTabItem(index);
@@ -297,8 +289,8 @@ namespace RefShortcuts.Editor
         {
             CurrentDataList.RemoveAt(index);
 
+            EditorUtility.SetDirty(_dataContainer);
             _tabItemsReorderableList = null;
-            EditorUtility.SetDirty(_shortcutData);
             _disableListDraw = true;
         }
 
@@ -314,12 +306,25 @@ namespace RefShortcuts.Editor
             callback?.Invoke();
             EditorGUILayout.EndVertical();
         }
-        
+
         private static void GuiHorizontal(Action callback)
         {
             EditorGUILayout.BeginHorizontal();
             callback?.Invoke();
             EditorGUILayout.EndHorizontal();
+        }
+
+        private static Vector2 DrawScroll(Vector2 position, Rect windowRect, Action callback)
+        {
+            var resultPos = EditorGUILayout.BeginScrollView(position,
+                GUILayout.Width(windowRect.width),
+                GUILayout.Height(windowRect.height - 40f));
+            {
+                callback?.Invoke();
+            }
+            EditorGUILayout.EndScrollView();
+
+            return resultPos;
         }
     }
 }

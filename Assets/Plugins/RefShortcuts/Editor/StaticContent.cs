@@ -16,5 +16,10 @@ namespace RefShortcuts.Editor
         public const string SETTINGS_TABS_LABEL = "Tabs:";
         
         public static readonly Color HEADER_COLOR = new Color(0f, 0.25f, 0f, 0.2f);
+
+        public const int REMOVE_BUTTON_SIZE = 20;
+        public const int SETTINGS_BUTTON_SIZE = 20;
+        public const int FIELD_SIZE = 60;
+        public const int REMOVE_BUTTON_OFFSET = 58;
     }
 }

@@ -8,16 +8,18 @@ namespace RefShortcuts.Editor
     public class TabContainer
     {
         [field: SerializeField] public string Name { get; private set; }
-        [field: SerializeField] public List<ShortcutDataContainer> DataList { get; private set; } = new List<ShortcutDataContainer>();
+        [field: SerializeField] public List<ObjectContainer> DataList { get; private set; } = new List<ObjectContainer>();
 
         public TabContainer(string name)
         {
             Name = name;
         }
-        public void SetDataList(List<ShortcutDataContainer> list)
+
+        public void SetDataList(List<ObjectContainer> list)
         {
             DataList = list;
         }
+
         public void SetName(string name)
         {
             Name = name;

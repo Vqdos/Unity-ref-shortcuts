@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace RefShortcuts.Editor
 {
-    public class ShortcutData : ScriptableObject
+    public class DataContainer : ScriptableObject
     {
-        public List<ShortcutDataContainer> GetData(int index)
+        public List<ObjectContainer> GetData(int index)
         {
             return index >= Container.Count ? null : Container[index].DataList;
         }
@@ -16,7 +16,7 @@ namespace RefShortcuts.Editor
             new TabContainer("Temp")
         };
 
-        public void SetDataList(List<ShortcutDataContainer> list, int index)
+        public void SetDataList(List<ObjectContainer> list, int index)
         {
             Container[index].SetDataList(list);
         }
@@ -52,7 +52,7 @@ namespace RefShortcuts.Editor
             Container.RemoveAll(x => x.Name == name);
         }
 
-        public void ReorderTabs(string[] array)
+        public void ReorderTabs(IEnumerable<string> array)
         {
             var source = new List<TabContainer>(Container);
             Container = new List<TabContainer>();

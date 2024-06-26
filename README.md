@@ -1,8 +1,7 @@
 # Unity-ref-shortcuts
 The Unity tool for quickly selecting any object in the project
 
-![image](https://github.com/Vqdos/Unity-ref-shortcuts/blob/main/Screens/Screenshot_27.png)
-![image](https://github.com/Vqdos/Unity-ref-shortcuts/blob/main/Screens/Screenshot_29.png)
+![image](https://github.com/Vqdos/Unity-ref-shortcuts/blob/main/Screens/Screen_0.png)
 
 #### Installation
 Install from Package Manager Url 
