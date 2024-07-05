@@ -78,7 +78,7 @@ namespace RefShortcuts.Editor
                     DrawTabs();
 
                     if (_tabItemsReorderableList == null)
-                        IntTabItemsReorderableList(CurrentDataList);
+                        IntTabItemsReorderList(CurrentDataList);
 
                     _tabItemsReorderableList?.DoLayoutList();
                 });
@@ -105,6 +105,12 @@ namespace RefShortcuts.Editor
                         typeof(Object),
                         true,
                         GUILayout.Width(width - 28));
+
+                    if (CurrentDataList == null)
+                    {
+                        _currentTabIndex = 0;
+                        ResetTabItemsList();
+                    }
 
                     if (_newObject != null && !CurrentDataList.Exists(x => x.Object == _newObject))
                     {
@@ -162,11 +168,14 @@ namespace RefShortcuts.Editor
 
             var lastIndex = _currentTabIndex;
 
-            GuiHorizontal(() => { _currentTabIndex = GUILayout.Toolbar(_currentTabIndex, tabs); });
+            GuiHorizontal(() =>
+            {
+                _currentTabIndex = GUILayout.Toolbar(_currentTabIndex, tabs);
+            });
 
             if (lastIndex != _currentTabIndex)
             {
-                IntTabItemsReorderableList(CurrentDataList);
+                IntTabItemsReorderList(CurrentDataList);
             }
         }
 
@@ -175,13 +184,13 @@ namespace RefShortcuts.Editor
             GuiVertical(() =>
             {
                 if (_tabsReorderableList == null)
-                    IntSettingsTabsReorderableList(_dataContainer.GetTabs());
+                    IntSettingsTabsReorderList(_dataContainer.GetTabs());
 
                 _tabsReorderableList?.DoLayoutList();
             });
         }
 
-        private void IntTabItemsReorderableList(IList list)
+        private void IntTabItemsReorderList(IList list)
         {
             _tabItemsReorderableList = new ReorderableList(list, typeof(Object));
             _tabItemsReorderableList.drawElementCallback += DrawTabItemsReorderListElement;
@@ -191,7 +200,7 @@ namespace RefShortcuts.Editor
             _tabItemsReorderableList.headerHeight = 0;
         }
 
-        private void IntSettingsTabsReorderableList(IList list)
+        private void IntSettingsTabsReorderList(IList list)
         {
             _tabsReorderableList = new ReorderableList(list, typeof(string));
             _tabsReorderableList.drawElementCallback += DrawSettingsReorderListElement;
@@ -249,11 +258,18 @@ namespace RefShortcuts.Editor
 
                 fieldRect.x = rect.x + position.width - StaticContent.REMOVE_BUTTON_OFFSET;
                 fieldRect.width = StaticContent.REMOVE_BUTTON_SIZE;
-                if (GUI.Button(fieldRect, StaticContent.CloseIcon))
+
+                if (_dataContainer.Container.Count > 1)
                 {
-                    _dataContainer.RemoveTab(tab);
-                    _disableListDraw = true;
-                    _tabsReorderableList = null;
+                    if (GUI.Button(fieldRect, StaticContent.CloseIcon))
+                    {
+                        _dataContainer.RemoveTab(tab);
+                        _disableListDraw = true;
+                        _tabsReorderableList = null;
+                        _tabItemsReorderableList = null;
+
+                        EditorUtility.SetDirty(_dataContainer);
+                    }
                 }
             });
         }
@@ -271,6 +287,9 @@ namespace RefShortcuts.Editor
 
             GuiHorizontal(() =>
             {
+                if(CurrentDataList.Count == 0)
+                    return;
+                
                 var fieldRect = new Rect(rect.x, rect.y, position.width - StaticContent.FIELD_SIZE, EditorGUIUtility.singleLineHeight);
                 var curInfo = CurrentDataList.ElementAt(index);
                 EditorGUI.ObjectField(fieldRect, curInfo.Object, typeof(Object), false);
@@ -288,8 +307,12 @@ namespace RefShortcuts.Editor
         private void RemoveTabItem(int index)
         {
             CurrentDataList.RemoveAt(index);
-
+            ResetTabItemsList();
             EditorUtility.SetDirty(_dataContainer);
+        }
+
+        private void ResetTabItemsList()
+        {
             _tabItemsReorderableList = null;
             _disableListDraw = true;
         }

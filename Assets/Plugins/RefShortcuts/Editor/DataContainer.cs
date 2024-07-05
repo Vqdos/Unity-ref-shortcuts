@@ -6,15 +6,15 @@ namespace RefShortcuts.Editor
 {
     public class DataContainer : ScriptableObject
     {
-        public List<ObjectContainer> GetData(int index)
-        {
-            return index >= Container.Count ? null : Container[index].DataList;
-        }
-
         [field: SerializeField] public List<TabContainer> Container { get; private set; } = new List<TabContainer>
         {
             new TabContainer("Temp")
         };
+
+        public List<ObjectContainer> GetData(int index)
+        {
+            return index >= Container.Count ? null : Container[index].DataList;
+        }
 
         public void SetDataList(List<ObjectContainer> list, int index)
         {
