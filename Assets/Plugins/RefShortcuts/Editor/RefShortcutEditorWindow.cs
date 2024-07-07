@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
+using UnityEditor.Callbacks;
 using UnityEditorInternal;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -290,11 +292,19 @@ namespace RefShortcuts.Editor
                 if(CurrentDataList.Count == 0)
                     return;
                 
-                var fieldRect = new Rect(rect.x, rect.y, position.width - StaticContent.FIELD_SIZE, EditorGUIUtility.singleLineHeight);
+                var fieldRect = new Rect(rect.x, rect.y, position.width - StaticContent.FIELD_SIZE - StaticContent.REMOVE_BUTTON_SIZE, EditorGUIUtility.singleLineHeight);
                 var curInfo = CurrentDataList.ElementAt(index);
                 EditorGUI.ObjectField(fieldRect, curInfo.Object, typeof(Object), false);
 
-                fieldRect.x = rect.x + position.width - StaticContent.REMOVE_BUTTON_OFFSET;
+                fieldRect.x = rect.x + position.width - StaticContent.REMOVE_BUTTON_OFFSET - StaticContent.REMOVE_BUTTON_SIZE;
+                fieldRect.width = StaticContent.REMOVE_BUTTON_SIZE;
+                if (GUI.Button(fieldRect, StaticContent.ShowIcon))
+                {
+                    var item = (ObjectContainer)_tabItemsReorderableList.list[index];
+                    ObjectPropertyEditor.OpenInPropertyEditor(item.Object);
+                }
+                
+                fieldRect.x = (rect.x + position.width) - StaticContent.REMOVE_BUTTON_OFFSET;
                 fieldRect.width = StaticContent.REMOVE_BUTTON_SIZE;
                 if (GUI.Button(fieldRect, StaticContent.RemoveIcon))
                 {
@@ -350,4 +360,66 @@ namespace RefShortcuts.Editor
             return resultPos;
         }
     }
+    
+    /*public static class OpenPropertiesEditorWindowDoubleClickListener
+   {
+      private static MethodInfo openPropertyEditorInfo;
+      private static System.Type[] callTypes = new[] { typeof(Object), typeof(bool) };
+      private static object[] callOpenBuffer = { null, true };
+ 
+      /// <summary>
+      /// Listens <see cref="OnOpenAssetAttribute"/> (order 100) for everything except folders.
+      /// </summary>
+      /// <param name="instanceID"><see cref="OnOpenAssetAttribute"/></param>
+      /// <param name="line"><see cref="OnOpenAssetAttribute"/></param>
+      /// <returns>True if opening the asset is handled</returns>
+      [OnOpenAsset(100)]
+      private static bool HandleOpenAsset(int instanceID, int line)
+      {
+         Object obj = EditorUtility.InstanceIDToObject(instanceID);
+         if (obj == null)
+         {
+            return false;
+         }
+ 
+         if (IsFolder(obj))
+         {
+            return false;
+         }
+ 
+         return OpenInPropertyEditor(obj);
+      }
+ 
+      private static bool IsFolder(Object obj)
+      {
+         string assetPath = AssetDatabase.GetAssetPath(obj);
+         return !string.IsNullOrEmpty(assetPath) && AssetDatabase.IsValidFolder(assetPath);
+      }
+ 
+      public static bool OpenInPropertyEditor(Object asset)
+      {
+         if (openPropertyEditorInfo == null)
+         {
+            System.Type propertyEditorType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.PropertyEditor");
+ 
+            // Get specific method, since there is an overload starting with Unity 2021.2
+            openPropertyEditorInfo = propertyEditorType.GetMethod(
+               "OpenPropertyEditor",
+               BindingFlags.Static | BindingFlags.NonPublic,
+               null,
+               callTypes,
+               null);
+         }
+ 
+ 
+         if (openPropertyEditorInfo != null)
+         {
+            callOpenBuffer[0] = asset;
+            openPropertyEditorInfo.Invoke(null, callOpenBuffer);
+            return true;
+         }
+ 
+         return false;
+      }
+   }*/
 }

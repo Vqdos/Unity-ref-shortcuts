@@ -1,13 +1,13 @@
-﻿using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace RefShortcuts.Editor
 {
     public static class StaticContent
     {
-        public static readonly GUIContent CloseSettingsIcon = EditorGUIUtility.IconContent("d_winbtn_win_close");
-        public static readonly GUIContent CloseIcon = EditorGUIUtility.IconContent("d_Toolbar Minus");
-        public static readonly GUIContent SettingsIcon = EditorGUIUtility.IconContent("_Popup");
+        public static readonly GUIContent CloseSettingsIcon;
+        public static readonly GUIContent SettingsIcon;
+        public static readonly GUIContent CloseIcon;
+        public static readonly GUIContent ShowIcon;
         public static GUIContent RemoveIcon => CloseIcon;
 
         public const string DRAG_FIELD_LABEL = "Drag anything here:";
@@ -21,5 +21,13 @@ namespace RefShortcuts.Editor
         public const int SETTINGS_BUTTON_SIZE = 20;
         public const int FIELD_SIZE = 60;
         public const int REMOVE_BUTTON_OFFSET = 58;
+
+        static StaticContent()
+        {
+            CloseSettingsIcon = new GUIContent(Resources.Load<Texture>("d_winbtn_win_close"));
+            SettingsIcon = new GUIContent(Resources.Load<Texture>("d__Popup"));
+            CloseIcon = new GUIContent(Resources.Load<Texture>("MaskEditor_Root15"));
+            ShowIcon = new GUIContent(Resources.Load<Texture>("ViewToolOrbit On"));
+        }
     }
 }
