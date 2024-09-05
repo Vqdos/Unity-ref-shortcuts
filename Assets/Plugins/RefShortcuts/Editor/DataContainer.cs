@@ -30,7 +30,7 @@ namespace RefShortcuts.Editor
         {
             if (Container.FirstOrDefault(x => x.Name == name) != null)
                 return false;
-            
+
             Container.Add(new TabContainer(name));
             return true;
         }
@@ -41,26 +41,36 @@ namespace RefShortcuts.Editor
 
             if (item == null)
                 return false;
-            
+
             item.SetName(to);
 
             return true;
         }
 
-        public void RemoveTab(string name)
+        public void RemoveTab(string tabName)
         {
-            Container.RemoveAll(x => x.Name == name);
+            Container.RemoveAll(x => x.Name == tabName);
         }
 
-        public void ReorderTabs(IEnumerable<string> array)
+        public bool ReorderTabs(IEnumerable<string> array)
         {
-            var source = new List<TabContainer>(Container);
-            Container = new List<TabContainer>();
-            
-            foreach (var tab in array)
+            var source = new List<TabContainer>();
+            foreach (var element in array)
             {
-                Container.Add(source.First(x=>x.Name.Equals(tab)));
+                var tab = Container.FirstOrDefault(x => x.Name.Equals(element));
+                if (tab == null)
+                    return false;
+
+                source.Add(tab);
             }
+
+            Container = new List<TabContainer>();
+            foreach (var tabContainer in source)
+            {
+                Container.Add(tabContainer);
+            }
+
+            return true;
         }
     }
 }

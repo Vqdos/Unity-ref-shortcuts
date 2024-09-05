@@ -234,7 +234,12 @@ namespace RefShortcuts.Editor
         private void SettingsTabsReorderCallback(ReorderableList reorderableList)
         {
             var array = reorderableList.list as string[];
-            _dataContainer.ReorderTabs(array);
+            if (!_dataContainer.ReorderTabs(array))
+            {
+                EditorUtility.DisplayDialog("Error", "Reorder error, reopen tool.\nContact with developer", "Ok");
+                Close();
+                return;
+            }
 
             EditorUtility.SetDirty(_dataContainer);
 
@@ -256,7 +261,10 @@ namespace RefShortcuts.Editor
                 var newTabName = EditorGUI.TextField(fieldRect, tab);
 
                 if (!newTabName.Equals(tab, StringComparison.InvariantCulture))
+                {
                     _dataContainer.RenameTab(tab, newTabName);
+                    _tabsReorderableList.list[index] = newTabName;
+                }
 
                 fieldRect.x = rect.x + position.width - StaticContent.REMOVE_BUTTON_OFFSET;
                 fieldRect.width = StaticContent.REMOVE_BUTTON_SIZE;
@@ -360,66 +368,4 @@ namespace RefShortcuts.Editor
             return resultPos;
         }
     }
-    
-    /*public static class OpenPropertiesEditorWindowDoubleClickListener
-   {
-      private static MethodInfo openPropertyEditorInfo;
-      private static System.Type[] callTypes = new[] { typeof(Object), typeof(bool) };
-      private static object[] callOpenBuffer = { null, true };
- 
-      /// <summary>
-      /// Listens <see cref="OnOpenAssetAttribute"/> (order 100) for everything except folders.
-      /// </summary>
-      /// <param name="instanceID"><see cref="OnOpenAssetAttribute"/></param>
-      /// <param name="line"><see cref="OnOpenAssetAttribute"/></param>
-      /// <returns>True if opening the asset is handled</returns>
-      [OnOpenAsset(100)]
-      private static bool HandleOpenAsset(int instanceID, int line)
-      {
-         Object obj = EditorUtility.InstanceIDToObject(instanceID);
-         if (obj == null)
-         {
-            return false;
-         }
- 
-         if (IsFolder(obj))
-         {
-            return false;
-         }
- 
-         return OpenInPropertyEditor(obj);
-      }
- 
-      private static bool IsFolder(Object obj)
-      {
-         string assetPath = AssetDatabase.GetAssetPath(obj);
-         return !string.IsNullOrEmpty(assetPath) && AssetDatabase.IsValidFolder(assetPath);
-      }
- 
-      public static bool OpenInPropertyEditor(Object asset)
-      {
-         if (openPropertyEditorInfo == null)
-         {
-            System.Type propertyEditorType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.PropertyEditor");
- 
-            // Get specific method, since there is an overload starting with Unity 2021.2
-            openPropertyEditorInfo = propertyEditorType.GetMethod(
-               "OpenPropertyEditor",
-               BindingFlags.Static | BindingFlags.NonPublic,
-               null,
-               callTypes,
-               null);
-         }
- 
- 
-         if (openPropertyEditorInfo != null)
-         {
-            callOpenBuffer[0] = asset;
-            openPropertyEditorInfo.Invoke(null, callOpenBuffer);
-            return true;
-         }
- 
-         return false;
-      }
-   }*/
 }
