@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace RefShortcuts.Editor
+namespace FavoriteRefs.Editor
 {
     public static class StaticContent
     {
@@ -12,9 +12,11 @@ namespace RefShortcuts.Editor
 
         public const string DRAG_FIELD_LABEL = "Drag anything here:";
         public const string NEW_TAB_NAME = "Tab";
-        public const string SHORTCUT_DATA_FILE_NAME = "RefShortcutData.asset";
+        public const string DATA_FILE_NAME = "FavoriteRefsData.asset";
+        public const string DATA_FILE_PATH = @"Plugins/Editor/FavoriteRefs/Resources";
+        public const string ASSETS = "Assets";
         public const string SETTINGS_TABS_LABEL = "Tabs:";
-        
+
         public static readonly Color HEADER_COLOR = new Color(0f, 0.25f, 0f, 0.2f);
 
         public const int REMOVE_BUTTON_SIZE = 20;

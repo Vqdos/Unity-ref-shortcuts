@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using UnityEngine;
 
-namespace RefShortcuts.Editor
+namespace FavoriteRefs.Editor
 {
    public static class ObjectPropertyEditor
    {

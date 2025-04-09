@@ -2,7 +2,7 @@
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace RefShortcuts.Editor
+namespace FavoriteRefs.Editor
 {
     [Serializable]
     public class ObjectContainer

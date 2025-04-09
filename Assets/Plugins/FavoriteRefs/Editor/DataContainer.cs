@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace RefShortcuts.Editor
+namespace FavoriteRefs.Editor
 {
     public class DataContainer : ScriptableObject
     {
