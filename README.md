@@ -6,10 +6,8 @@ The Unity tool for quickly selecting any object in the project
 #### Installation
 Install from Package Manager Url 
 ```
-https://github.com/Vqdos/Unity-ref-shortcuts.git?path=Assets/Plugins/RefShortcuts
+https://github.com/Vqdos/Unity-ref-shortcuts.git?path=Assets/Plugins/FavoriteRefs
 ```
 
 
 ![image](https://user-images.githubusercontent.com/1497430/181345613-b81a77c6-c449-4b19-ab1e-88b1ef06f6fc.png)
-
-> Based on [snoopyuj/BShortcut](https://github.com/snoopyuj/BShortcut).
